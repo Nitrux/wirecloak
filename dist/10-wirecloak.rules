@@ -1,0 +1,17 @@
+/* Allow members of the wheel group to execute wireguard commands
+ * via pkexec without a password.
+ * This is used by Wirecloak for live stats and toggling tunnels.
+ */
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.freedesktop.policykit.exec" &&
+        subject.isInGroup("wheel")) {
+
+        var cmd = action.lookup("command_line");
+        
+        // Allow 'wg' (stats) and 'wg-quick' (toggle)
+        if (cmd.indexOf("/usr/bin/wg ") === 0 || 
+            cmd.indexOf("/usr/bin/wg-quick ") === 0) {
+            return polkit.Result.YES;
+        }
+    }
+});

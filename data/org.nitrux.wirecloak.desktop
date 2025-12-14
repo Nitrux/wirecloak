@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Wirecloak
+Comment=Easily manage and use WireGuard VPN configurations
+Exec=cinderward
+Icon=preferences-system-network-proxy
+Type=Application
+Categories=System;Security;Qt;
+Terminal=false
+StartupNotify=true
