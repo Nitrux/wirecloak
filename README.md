@@ -23,8 +23,8 @@ It provides a user-friendly interface for managing VPN tunnels while securely in
 ### Runtime Requirements
 
 ```
-mauikit (>= 4.0.2)
-mauikit-filebrowsing (>= 4.0.2)
+mauikit (>= 4.0.3)
+mauikit-filebrowsing (>= 4.0.3)
 qt6 (>= 6.8.2)
 kf6-windowsystem (>= 6.13.0)
 kf6-i18n (>= 6.13.0)
