@@ -4,7 +4,7 @@ Wirecloak is a modern, native WireGuard VPN client for Nitrux, built with **[Mau
 
 It provides a user-friendly interface for managing VPN tunnels while securely integrating with the system's immutable root filesystem.
 
-![Cinderward](https://nxos.org/wp-content/uploads/2025/12/screenshot-20251214-013530.png)
+![Wirecloak](https://nxos.org/wp-content/uploads/2025/12/screenshot-20251214-013530.png)
 > Wirecloak, a GUI for using WireGuard.
 
 > [!WARNING]
