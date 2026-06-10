@@ -55,7 +55,7 @@ checkinstall -D -y \
 	--pakdir=. \
 	--maintainer=uri_herrera@nxos.org \
 	--provides=wirecloak \
-	--requires="libqt6svg6,mauikit \(\>= 4.0.3\),mauikit-filebrowsing \(\>= 4.0.3\),wireguard-tools" \
+	--requires="libqt6svg6,mauikit \(\>= 4.0.4\),mauikit-filebrowsing \(\>= 4.0.4\),wireguard-tools" \
 	--nodoc \
 	--strip=no \
 	--stripso=yes \
