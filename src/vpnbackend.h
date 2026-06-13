@@ -18,7 +18,7 @@ public:
     Q_INVOKABLE void removeProfile(const QString &configName);
     Q_INVOKABLE QStringList listProfiles();
 
-signals:
+Q_SIGNALS:
     void profileImported();
     void operationError(const QString &message);
     void tunnelStateChanged();

@@ -15,13 +15,13 @@ namespace
 {
 static constexpr int kProcTimeoutMs = 30000;
 
-static const QString kPkexec = "/usr/bin/pkexec";
-static const QString kInstall = "/usr/bin/install";
-static const QString kRm = "/usr/bin/rm";
-static const QString kLs = "/usr/bin/ls";
-static const QString kWg = "/usr/bin/wg";
-static const QString kWgQuick = "/usr/bin/wg-quick";
-static const QString kOverlayChroot = "/usr/sbin/overlayroot-chroot";
+static const QString kPkexec = QStringLiteral("/usr/bin/pkexec");
+static const QString kInstall = QStringLiteral("/usr/bin/install");
+static const QString kRm = QStringLiteral("/usr/bin/rm");
+static const QString kLs = QStringLiteral("/usr/bin/ls");
+static const QString kWg = QStringLiteral("/usr/bin/wg");
+static const QString kWgQuick = QStringLiteral("/usr/bin/wg-quick");
+static const QString kOverlayChroot = QStringLiteral("/usr/sbin/overlayroot-chroot");
 
 static QString localPathFromUrlOrPath(const QString &sourcePath)
 {
@@ -39,16 +39,16 @@ static bool runProcess(const QString &program,
     QProcess p;
     p.start(program, args);
     if (!p.waitForStarted(kProcTimeoutMs)) {
-        if (outStdout) *outStdout = {};
-        if (outStderr) *outStderr = "Failed to start process.";
+        if (outStdout) *outStdout = QString();
+        if (outStderr) *outStderr = QStringLiteral("Failed to start process.");
         if (outExitCode) *outExitCode = -1;
         return false;
     }
     if (!p.waitForFinished(kProcTimeoutMs)) {
         p.kill();
         p.waitForFinished(2000);
-        if (outStdout) *outStdout = {};
-        if (outStderr) *outStderr = "Process timed out.";
+        if (outStdout) *outStdout = QString();
+        if (outStderr) *outStderr = QStringLiteral("Process timed out.");
         if (outExitCode) *outExitCode = -1;
         return false;
     }
@@ -68,20 +68,20 @@ static bool runPkexec(const QStringList &args,
 
 static bool isValidProfileFileName(const QString &name)
 {
-    static const QRegularExpression re("^[a-zA-Z0-9_\\-]+\\.conf$");
+    static const QRegularExpression re(QStringLiteral(R"(^[a-zA-Z0-9_-]+\.conf$)"));
     return re.match(name).hasMatch();
 }
 
 static bool isValidInterfaceName(const QString &name)
 {
-    static const QRegularExpression re("^[a-zA-Z0-9_\\-]+$");
+    static const QRegularExpression re(QStringLiteral(R"(^[a-zA-Z0-9_-]+$)"));
     return re.match(name).hasMatch();
 }
 
 static QString interfaceNameFromProfile(const QString &input)
 {
     QString name = QFileInfo(input).fileName();
-    if (name.endsWith(".conf")) name.chop(5);
+    if (name.endsWith(QStringLiteral(".conf"))) name.chop(5);
     if (!isValidInterfaceName(name)) return {};
     return name;
 }
@@ -106,27 +106,27 @@ void VpnBackend::importProfile(const QString &sourcePath)
 
     QFile sourceFile(localPath);
     if (!sourceFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        emit operationError("Could not open source file.");
+        Q_EMIT operationError(QStringLiteral("Could not open source file."));
         return;
     }
 
     QString cleanContent;
     QTextStream in(&sourceFile);
 
-    static const QRegularExpression dnsLine("^\\s*DNS\\s*=", QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression dnsLine(QStringLiteral(R"(^\s*DNS\s*=)"), QRegularExpression::CaseInsensitiveOption);
 
     while (!in.atEnd()) {
         const QString line = in.readLine();
         if (dnsLine.match(line).hasMatch()) continue;
         cleanContent += line;
-        cleanContent += '\n';
+        cleanContent += QChar(u'\n');
     }
 
     sourceFile.close();
 
     QTemporaryFile tempFile;
     if (!tempFile.open()) {
-        emit operationError("Failed to create temporary staging file.");
+        Q_EMIT operationError(QStringLiteral("Failed to create temporary staging file."));
         return;
     }
 
@@ -135,36 +135,36 @@ void VpnBackend::importProfile(const QString &sourcePath)
 
     const QString configName = QFileInfo(localPath).fileName();
     if (!isValidProfileFileName(configName)) {
-        emit operationError("Invalid filename. Use alphanumeric characters ending in .conf only.");
+        Q_EMIT operationError(QStringLiteral("Invalid filename. Use alphanumeric characters ending in .conf only."));
         return;
     }
 
-    const QString dstPath = "/etc/wireguard/" + configName;
+    const QString dstPath = QStringLiteral("/etc/wireguard/") + configName;
 
     QString out;
     QString err;
     int code = 0;
 
     const bool liveOk = runPkexec(
-        {kInstall, "-o", "root", "-g", "root", "-m", "600", tempFile.fileName(), dstPath},
+        {kInstall, QStringLiteral("-o"), QStringLiteral("root"), QStringLiteral("-g"), QStringLiteral("root"), QStringLiteral("-m"), QStringLiteral("600"), tempFile.fileName(), dstPath},
         &out, &err, &code
     );
 
     if (!liveOk || code != 0) {
-        emit operationError("Failed to install profile to live system.");
+        Q_EMIT operationError(QStringLiteral("Failed to install profile to live system."));
         return;
     }
 
     const bool persistOk = runPkexec(
-        {kOverlayChroot, kInstall, "-o", "root", "-g", "root", "-m", "600", tempFile.fileName(), dstPath},
+        {kOverlayChroot, kInstall, QStringLiteral("-o"), QStringLiteral("root"), QStringLiteral("-g"), QStringLiteral("root"), QStringLiteral("-m"), QStringLiteral("600"), tempFile.fileName(), dstPath},
         &out, &err, &code
     );
 
     if (!persistOk || code != 0) {
-        emit operationError("Installed to live system, but failed to persist. Reboot may be required.");
+        Q_EMIT operationError(QStringLiteral("Installed to live system, but failed to persist. Reboot may be required."));
     }
 
-    emit profileImported();
+    Q_EMIT profileImported();
 }
 
 QString VpnBackend::validateInterfaceName(const QString &input)
@@ -177,7 +177,7 @@ void VpnBackend::toggleTunnel(const QString &configName, bool enable)
 {
     const QString ifname = validateInterfaceName(configName);
     if (ifname.isEmpty()) {
-        emit operationError("Invalid interface name.");
+        Q_EMIT operationError(QStringLiteral("Invalid interface name."));
         return;
     }
 
@@ -185,20 +185,20 @@ void VpnBackend::toggleTunnel(const QString &configName, bool enable)
     QString err;
     int code = 0;
 
-    if (enable && QFile::exists("/sys/class/net/" + ifname)) {
-        runPkexec({kWgQuick, "down", ifname}, &out, &err, &code);
+    if (enable && QFile::exists(QStringLiteral("/sys/class/net/") + ifname)) {
+        runPkexec({kWgQuick, QStringLiteral("down"), ifname}, &out, &err, &code);
     }
 
-    const QString action = enable ? "up" : "down";
+    const QString action = enable ? QStringLiteral("up") : QStringLiteral("down");
 
     const bool ok = runPkexec({kWgQuick, action, ifname}, &out, &err, &code);
     if (!ok || code != 0) {
         const QString details = err.trimmed();
-        emit operationError(details.isEmpty() ? "Failed to toggle tunnel." : ("Failed to toggle tunnel: " + details));
+        Q_EMIT operationError(details.isEmpty() ? QStringLiteral("Failed to toggle tunnel.") : (QStringLiteral("Failed to toggle tunnel: ") + details));
         return;
     }
 
-    emit tunnelStateChanged();
+    Q_EMIT tunnelStateChanged();
 }
 
 QVariantMap VpnBackend::getTunnelStatus(const QString &configName)
@@ -207,22 +207,22 @@ QVariantMap VpnBackend::getTunnelStatus(const QString &configName)
 
     const QString ifname = validateInterfaceName(configName);
     if (ifname.isEmpty()) {
-        status["active"] = false;
-        status["handshake"] = 0;
-        status["rx"] = 0;
-        status["tx"] = 0;
+        status[QStringLiteral("active")] = false;
+        status[QStringLiteral("handshake")] = 0;
+        status[QStringLiteral("rx")] = 0;
+        status[QStringLiteral("tx")] = 0;
         return status;
     }
 
-    if (!QFile::exists("/sys/class/net/" + ifname)) {
-        status["active"] = false;
-        status["handshake"] = 0;
-        status["rx"] = 0;
-        status["tx"] = 0;
+    if (!QFile::exists(QStringLiteral("/sys/class/net/") + ifname)) {
+        status[QStringLiteral("active")] = false;
+        status[QStringLiteral("handshake")] = 0;
+        status[QStringLiteral("rx")] = 0;
+        status[QStringLiteral("tx")] = 0;
         return status;
     }
 
-    status["active"] = true;
+    status[QStringLiteral("active")] = true;
 
     QString out;
     QString err;
@@ -232,12 +232,12 @@ QVariantMap VpnBackend::getTunnelStatus(const QString &configName)
 
     qint64 maxHandshake = cache.hasHandshake ? cache.handshake : 0;
 
-    const bool hsOk = runProcess(kWg, {"show", ifname, "latest-handshakes"}, &out, &err, &code);
+    const bool hsOk = runProcess(kWg, {QStringLiteral("show"), ifname, QStringLiteral("latest-handshakes")}, &out, &err, &code);
     if (hsOk && code == 0) {
         qint64 newest = 0;
-        const QStringList lines = out.split('\n', Qt::SkipEmptyParts);
+        const QStringList lines = out.split(QChar(u'\n'), Qt::SkipEmptyParts);
         for (const QString &line : lines) {
-            const QStringList parts = line.trimmed().split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);
+            const QStringList parts = line.trimmed().split(QRegularExpression(QStringLiteral(R"(\s+)")), Qt::SkipEmptyParts);
             if (parts.size() < 2) continue;
             bool okNum = false;
             const qint64 ts = parts.last().toLongLong(&okNum);
@@ -248,7 +248,7 @@ QVariantMap VpnBackend::getTunnelStatus(const QString &configName)
         cache.hasHandshake = true;
     }
 
-    status["handshake"] = maxHandshake;
+    status[QStringLiteral("handshake")] = maxHandshake;
 
     qint64 rxSum = cache.hasTransfer ? cache.rx : 0;
     qint64 txSum = cache.hasTransfer ? cache.tx : 0;
@@ -257,14 +257,14 @@ QVariantMap VpnBackend::getTunnelStatus(const QString &configName)
     err.clear();
     code = 0;
 
-    const bool txOk = runProcess(kWg, {"show", ifname, "transfer"}, &out, &err, &code);
+    const bool txOk = runProcess(kWg, {QStringLiteral("show"), ifname, QStringLiteral("transfer")}, &out, &err, &code);
     if (txOk && code == 0) {
         qint64 rxNew = 0;
         qint64 txNew = 0;
 
-        const QStringList lines = out.split('\n', Qt::SkipEmptyParts);
+        const QStringList lines = out.split(QChar(u'\n'), Qt::SkipEmptyParts);
         for (const QString &line : lines) {
-            const QStringList parts = line.trimmed().split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);
+            const QStringList parts = line.trimmed().split(QRegularExpression(QStringLiteral(R"(\s+)")), Qt::SkipEmptyParts);
             if (parts.size() >= 3) {
                 bool okRx = false;
                 bool okTx = false;
@@ -292,8 +292,8 @@ QVariantMap VpnBackend::getTunnelStatus(const QString &configName)
 
     s_statusCache.insert(ifname, cache);
 
-    status["rx"] = rxSum;
-    status["tx"] = txSum;
+    status[QStringLiteral("rx")] = rxSum;
+    status[QStringLiteral("tx")] = txSum;
 
     return status;
 }
@@ -302,29 +302,29 @@ void VpnBackend::removeProfile(const QString &configName)
 {
     const QString fileName = QFileInfo(configName).fileName();
     if (!isValidProfileFileName(fileName)) {
-        emit operationError("Invalid profile name.");
+        Q_EMIT operationError(QStringLiteral("Invalid profile name."));
         return;
     }
 
-    const QString dstPath = "/etc/wireguard/" + fileName;
+    const QString dstPath = QStringLiteral("/etc/wireguard/") + fileName;
 
     QString out;
     QString err;
     int code = 0;
 
-    runPkexec({kRm, "-f", dstPath}, &out, &err, &code);
-    runPkexec({kOverlayChroot, kRm, "-f", dstPath}, &out, &err, &code);
+    runPkexec({kRm, QStringLiteral("-f"), dstPath}, &out, &err, &code);
+    runPkexec({kOverlayChroot, kRm, QStringLiteral("-f"), dstPath}, &out, &err, &code);
 
-    emit profileImported();
+    Q_EMIT profileImported();
 }
 
 QStringList VpnBackend::listProfiles()
 {
     QStringList profiles;
 
-    QDir dir("/etc/wireguard");
+    QDir dir(QStringLiteral("/etc/wireguard"));
     if (dir.exists() && dir.isReadable()) {
-        profiles = dir.entryList({"*.conf"}, QDir::Files);
+        profiles = dir.entryList({QStringLiteral("*.conf")}, QDir::Files);
     }
 
     if (profiles.isEmpty()) {
@@ -332,9 +332,9 @@ QStringList VpnBackend::listProfiles()
         QString err;
         int code = 0;
 
-        const bool ok = runPkexec({kLs, "/etc/wireguard"}, &out, &err, &code);
+        const bool ok = runPkexec({kLs, QStringLiteral("/etc/wireguard")}, &out, &err, &code);
         if (ok && code == 0) {
-            const QStringList lines = out.split('\n', Qt::SkipEmptyParts);
+            const QStringList lines = out.split(QChar(u'\n'), Qt::SkipEmptyParts);
             for (const QString &line : lines) {
                 const QString name = line.trimmed();
                 if (isValidProfileFileName(name)) profiles.append(name);
