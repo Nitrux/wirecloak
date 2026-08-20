@@ -152,32 +152,6 @@ Maui.ApplicationWindow {
         ]
 
         headBar.rightContent: [
-            Label {
-                text: "Select Tunnel"
-                font.weight: Font.DemiBold
-                verticalAlignment: Text.AlignVCenter
-            },
-            ComboBox {
-                implicitWidth: 160
-                model: profiles
-                currentIndex: Math.max(0, profiles.indexOf(selectedProfile))
-                displayText: cleanName(currentText)
-                delegate: ItemDelegate {
-                    width: parent.width
-                    text: cleanName(modelData)
-                    highlighted: parent.highlightedIndex === index
-                    font.weight: parent.currentIndex === index ? Font.Bold : Font.Normal
-                }
-                onActivated: (i) => {
-                    selectedProfile = profiles[i]
-                    selectedStatus = backend.getTunnelStatus(selectedProfile)
-                    pushActivity("Selected " + cleanName(selectedProfile))
-                }
-            },
-            ToolSeparator {
-                bottomPadding: 10
-                topPadding: 10
-            },
             Maui.ToolButtonMenu {
                 icon.name: "overflow-menu"
                 MenuItem {
@@ -194,99 +168,197 @@ Maui.ApplicationWindow {
             anchors.fill: parent
             spacing: Maui.Style.space.big
 
-            // 1. TUNNEL OPERATIONS
             Maui.SectionHeader {
                 Layout.fillWidth: true
                 text1: qsTr("Tunnel Operations")
                 text2: qsTr("Manage the selected WireGuard interface.")
+                label2.wrapMode: Text.Wrap
             }
 
-            Maui.FlexSectionItem {
+            Rectangle {
                 Layout.fillWidth: true
-                label1.text: qsTr("VPN Status")
-                label2.text: qsTr("Bring tunnel interface up or down.")
+                color: Maui.Theme.alternateBackgroundColor
+                radius: Maui.Style.radiusV
+                border.color: Maui.Theme.backgroundColor
+                border.width: 1
+                implicitHeight: tunnelControlLayout.implicitHeight + Maui.Style.contentMargins * 2
 
-                Switch {
-                    enabled: selectedProfile !== ""
-                    checked: selectedStatus.active
-                    onToggled: backend.toggleTunnel(selectedProfile, checked)
-                    Connections {
-                        target: root
-                        function onStatsTriggerChanged() {
-                            if (selectedProfile !== "") {
+                ColumnLayout {
+                    id: tunnelControlLayout
+                    anchors.fill: parent
+                    anchors.margins: Maui.Style.contentMargins
+                    spacing: Maui.Style.space.small
+
+                    Maui.SectionHeader {
+                        Layout.fillWidth: true
+                        text1: qsTr("Tunnel Control")
+                        text2: qsTr("Select a WireGuard interface and bring it up or down.")
+                        label2.wrapMode: Text.Wrap
+                    }
+
+                    Maui.FlexSectionItem {
+                        id: tunnelSelectorItem
+                        Layout.fillWidth: true
+                        flat: true
+                        label1.text: qsTr("Selected Tunnel")
+                        label2.text: qsTr("Choose the WireGuard interface to manage.")
+                        label2.wrapMode: Text.Wrap
+
+                        ComboBox {
+                            enabled: profiles.length > 0
+                            Layout.fillWidth: !tunnelSelectorItem.wide
+                            Layout.minimumWidth: 0
+                            Layout.preferredWidth: Maui.Style.units.gridUnit * 12
+                            model: profiles
+                            currentIndex: Math.max(0, profiles.indexOf(selectedProfile))
+                            displayText: currentIndex >= 0 && currentText
+                                ? cleanName(currentText)
+                                : qsTr("No Tunnels")
+
+                            delegate: ItemDelegate {
+                                width: parent.width
+                                text: cleanName(modelData)
+                                highlighted: parent.highlightedIndex === index
+                                font.weight: parent.currentIndex === index ? Font.Bold : Font.Normal
+                            }
+
+                            onActivated: (i) => {
+                                selectedProfile = profiles[i]
                                 selectedStatus = backend.getTunnelStatus(selectedProfile)
+                                pushActivity("Selected " + cleanName(selectedProfile))
+                            }
+                        }
+                    }
+
+                    Maui.FlexSectionItem {
+                        Layout.fillWidth: true
+                        flat: true
+                        label1.text: qsTr("VPN Status")
+                        label2.text: qsTr("Bring tunnel interface up or down.")
+                        label2.wrapMode: Text.Wrap
+
+                        Switch {
+                            enabled: selectedProfile !== ""
+                            checked: selectedStatus.active
+                            onToggled: backend.toggleTunnel(selectedProfile, checked)
+
+                            Connections {
+                                target: root
+
+                                function onStatsTriggerChanged() {
+                                    if (selectedProfile !== "") {
+                                        selectedStatus = backend.getTunnelStatus(selectedProfile)
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
 
-            // 2. ACTIVE CONNECTIONS
-            Maui.SectionHeader {
+            Rectangle {
                 Layout.fillWidth: true
-                text1: qsTr("Active Connections")
-                text2: qsTr("Manage your available WireGuard tunnels.")
-            }
-            
-            Maui.ListBrowser {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 300
-                model: profiles
-                
-                holder.visible: profiles.length === 0
-                holder.emoji: "network-vpn"
-                holder.title: qsTr("No Tunnels")
-                holder.body: qsTr("Add a WireGuard config file to get started.")
+                color: Maui.Theme.alternateBackgroundColor
+                radius: Maui.Style.radiusV
+                border.color: Maui.Theme.backgroundColor
+                border.width: 1
+                implicitHeight: connectionsLayout.implicitHeight + Maui.Style.contentMargins * 2
 
-                delegate: Maui.ListDelegate {
-                    width: ListView.view.width
-                    property var st: {
-                        root.statsTrigger
-                        return backend.getTunnelStatus(modelData)
+                ColumnLayout {
+                    id: connectionsLayout
+                    anchors.fill: parent
+                    anchors.margins: Maui.Style.contentMargins
+                    spacing: Maui.Style.space.small
+
+                    Maui.SectionHeader {
+                        Layout.fillWidth: true
+                        text1: qsTr("Active Connections")
+                        text2: qsTr("Manage your available WireGuard tunnels.")
+                        label2.wrapMode: Text.Wrap
                     }
-                    label: cleanName(modelData)
-                    label2: st.active 
-                            ? "Active • ↑ " + formatBytes(st.tx) + " ↓ " + formatBytes(st.rx)
-                            : "Disconnected"
-                    iconName: st.active ? "emblem-default" : "emblem-unmounted"
-                    
-                    Button {
-                        anchors.right: parent.right
-                        anchors.verticalCenter: parent.verticalCenter
-                        display: AbstractButton.IconOnly
-                        icon.name: "edit-delete"
-                        onClicked: {
-                            backend.removeProfile(modelData)
-                            refreshProfiles()
-                            pushActivity("Removed " + cleanName(modelData))
+
+                    Maui.ListBrowser {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 300
+                        clip: true
+                        model: profiles
+
+                        holder.visible: profiles.length === 0
+                        holder.emoji: "network-vpn"
+                        holder.title: qsTr("No Tunnels")
+                        holder.body: qsTr("Add a WireGuard config file to get started.")
+
+                        delegate: Maui.ListDelegate {
+                            width: ListView.view.width
+
+                            property var st: {
+                                root.statsTrigger
+                                return backend.getTunnelStatus(modelData)
+                            }
+
+                            label: cleanName(modelData)
+                            label2: st.active
+                                    ? "Active • ↑ " + formatBytes(st.tx) + " ↓ " + formatBytes(st.rx)
+                                    : "Disconnected"
+                            iconName: st.active ? "emblem-default" : "emblem-unmounted"
+
+                            Button {
+                                anchors.right: parent.right
+                                anchors.verticalCenter: parent.verticalCenter
+                                display: AbstractButton.IconOnly
+                                icon.name: "edit-delete"
+
+                                onClicked: {
+                                    backend.removeProfile(modelData)
+                                    refreshProfiles()
+                                    pushActivity("Removed " + cleanName(modelData))
+                                }
+                            }
                         }
                     }
                 }
             }
 
-            // 3. RECENT ACTIVITY
-            Maui.SectionHeader {
+            Rectangle {
                 Layout.fillWidth: true
-                text1: qsTr("Recent Activity")
-                text2: qsTr("Log of recent connection events.")
-            }
-            
-            Maui.ListBrowser {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 200
-                model: activityModel
-                
-                holder.visible: activityModel.count === 0
-                holder.emoji: "dialog-information"
-                holder.title: qsTr("No Activity")
-                holder.body: qsTr("Events will appear here.")
-                
-                delegate: Maui.ListDelegate {
-                    width: ListView.view.width
-                    label: model.msg
-                    label2: model.time
-                    iconName: "dialog-information"
-                    iconSize: Maui.Style.iconSizes.small
+                color: Maui.Theme.alternateBackgroundColor
+                radius: Maui.Style.radiusV
+                border.color: Maui.Theme.backgroundColor
+                border.width: 1
+                implicitHeight: activityLayout.implicitHeight + Maui.Style.contentMargins * 2
+
+                ColumnLayout {
+                    id: activityLayout
+                    anchors.fill: parent
+                    anchors.margins: Maui.Style.contentMargins
+                    spacing: Maui.Style.space.small
+
+                    Maui.SectionHeader {
+                        Layout.fillWidth: true
+                        text1: qsTr("Recent Activity")
+                        text2: qsTr("Log of recent connection events.")
+                        label2.wrapMode: Text.Wrap
+                    }
+
+                    Maui.ListBrowser {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 200
+                        clip: true
+                        model: activityModel
+
+                        holder.visible: activityModel.count === 0
+                        holder.emoji: "dialog-information"
+                        holder.title: qsTr("No Activity")
+                        holder.body: qsTr("Events will appear here.")
+
+                        delegate: Maui.ListDelegate {
+                            width: ListView.view.width
+                            label: model.msg
+                            label2: model.time
+                            iconName: "dialog-information"
+                            iconSize: Maui.Style.iconSizes.small
+                        }
+                    }
                 }
             }
         }
