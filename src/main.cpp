@@ -40,20 +40,15 @@ int main(int argc, char *argv[])
 
     KLocalizedString::setApplicationDomain(QByteArrayLiteral("wirecloak"));
 
-    // 4. SETUP VERSION (With Git Info)
-    QString version = QStringLiteral("0.0.1");
-#ifdef GIT_COMMIT_HASH
-    version += QStringLiteral(" %1/%2").arg(QStringLiteral(GIT_BRANCH), QStringLiteral(GIT_COMMIT_HASH));
-#endif
-
     // 5. SETUP ABOUT DATA
     KAboutData about(QStringLiteral("wirecloak"),
                      i18n("Wirecloak"),
-                     version,
+                     QStringLiteral("0.0.1"),
                      i18n("Manage WireGuard VPN configurations."),
                      KAboutLicense::BSD_3_Clause,
                       // "Maui" must be present for the footer logo to appear
-                     i18n("© %1 Made by Nitrux | Built with MauiKit", QString::number(QDate::currentDate().year())));
+                     i18n("© %1 Made by Nitrux | Built with MauiKit", QString::number(QDate::currentDate().year())),
+                     QString(GIT_BRANCH) + "/" + QString(GIT_COMMIT_HASH));
 
     about.addAuthor(QStringLiteral("Uri Herrera"), i18n("Developer"), QStringLiteral("uri_herrera@nxos.org"));
     about.setHomepage(QStringLiteral("https://nxos.org"));
