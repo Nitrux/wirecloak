@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
     app.setApplicationName(QStringLiteral("Wirecloak"));
     
     // 3. SETUP WINDOW ICON
-    QIcon appIcon = QIcon::fromTheme(QStringLiteral("preferences-system-network-proxy"), QIcon(QStringLiteral(":/assets/wirecloak.svg")));
+    QIcon appIcon = QIcon::fromTheme(QStringLiteral("wirecloak"), QIcon(QStringLiteral(":/assets/wirecloak.svg")));
     app.setWindowIcon(appIcon);
 
     KLocalizedString::setApplicationDomain(QByteArrayLiteral("wirecloak"));

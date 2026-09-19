@@ -2,7 +2,7 @@
 Name=Wirecloak
 Comment=Easily manage and use WireGuard VPN configurations
 Exec=wirecloak
-Icon=preferences-system-network-proxy
+Icon=wirecloak
 Type=Application
 Categories=System;Security;Qt;
 Terminal=false
