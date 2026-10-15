@@ -12,7 +12,7 @@
 #include <QDate>
 
 #include <KLocalizedString>
-#include <KLocalizedContext>
+#include <KLocalizedQmlContext>
 #include <KAboutData>
 #include <MauiKit4/Core/mauiapp.h>
 #include "vpnbackend.h"
@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
     qmlRegisterType<VpnBackend>("org.nitrux.vpn", 1, 0, "VpnBackend");
 
     QQmlApplicationEngine engine;
-    engine.rootContext()->setContextObject(new KLocalizedContext(&engine));
+    engine.rootContext()->setContextObject(new KLocalizedQmlContext(&engine));
 
     const QUrl url(QStringLiteral("qrc:/qml/main.qml"));
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
