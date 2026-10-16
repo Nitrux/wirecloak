@@ -32,7 +32,7 @@ Priority: optional
 Architecture: ${TARGET_ARCH}
 Maintainer: uri_herrera@nxos.org
 Provides: wirecloak
-Depends: libqt6svg6,mauikit (>= 4.0.5),mauikit-filebrowsing (>= 4.0.5),wireguard-tools
+Depends: libqt6svg6,mauikit (>= 4.0.5),mauikit-filebrowsing (>= 4.0.5),qml6-module-qtquick,qml6-module-qtquick-controls,qml6-module-qtquick-layouts,wireguard-tools
 Description: wirecloak
  wirecloak
 CONTROL
