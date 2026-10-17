@@ -37,6 +37,7 @@ $APT_COMMAND install -y --no-install-recommends \
     gnupg2 \
     libkf6coreaddons-dev \
     libkf6i18n-dev \
+    libkf6kio-dev \
     libkf6notifications-dev \
     libkf6windowsystem-dev \
     libxkbcommon-dev \
